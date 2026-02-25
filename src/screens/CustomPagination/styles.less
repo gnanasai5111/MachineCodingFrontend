@@ -1,0 +1,31 @@
+.pagination-wrapper {
+  .pagination-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    gap: 2px;
+    .block {
+      padding: 4px;
+      border-radius: 4px;
+      height: 30px;
+      width: 30px;
+      align-items: center;
+      display: flex;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .block.active {
+      background-color: #000;
+      color: #fff;
+    }
+    .disabled {
+      color: gray;
+      cursor: not-allowed;
+    }
+    .action {
+      cursor: pointer;
+      color: #000;
+    }
+  }
+}

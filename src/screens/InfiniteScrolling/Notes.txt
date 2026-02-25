@@ -1,0 +1,164 @@
+// Approach 1 
+
+import { useEffect, useRef, useState } from "react";
+import useInfiniteScrolling from "../hooks/useInfiniteScrolling";
+
+function InfiniteScrolling() {
+  const [page, setPage] = useState(0);
+  const { data, loading, error, hasMore } = useInfiniteScrolling(page, 20);
+
+  const targetRef = useRef<HTMLParagraphElement | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        if (hasMore) {
+          setPage((prev) => prev + 1);
+        }
+      }
+    });
+
+    if (targetRef.current) observerRef.current.observe(targetRef.current);
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [data, loading, hasMore]);
+  return (
+    <div className="container">
+      {data?.map((item, index) => {
+        const isLast = index === data.length - 1;
+        return (
+          <p key={index} ref={isLast ? targetRef : null}>
+            {item.title}
+          </p>
+        );
+      })}
+      {loading && <p>...loading</p>}
+      {error && <p>Something went wrong</p>}
+    </div>
+  );
+}
+
+export default InfiniteScrolling;
+
+
+
+// Approach 2 
+
+import { useCallback, useRef, useState } from "react";
+import useInfiniteScrolling from "../../hooks/useInfiniteScrolling";
+
+function InfiniteScrolling() {
+  const [page, setPage] = useState(0);
+  const { data, loading, error, hasMore } = useInfiniteScrolling(page, 20);
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const targetRef = useCallback(
+    (element: HTMLParagraphElement) => {
+      if (loading) {
+        return;
+      }
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          if (hasMore) {
+            setPage((prev) => prev + 1);
+          }
+        }
+      });
+      if (element) {
+        observerRef.current.observe(element);
+      }
+    },
+    [loading, hasMore]
+  );
+
+  return (
+    <div className="container">
+      {data?.map((item, index) => {
+        const isLast = index === data.length - 1;
+        return (
+          <p key={index} ref={isLast ? targetRef : null}>
+            {item.title}
+          </p>
+        );
+      })}
+      {loading && <p>...loading</p>}
+      {error && <p>Something went wrong</p>}
+    </div>
+  );
+}
+
+export default InfiniteScrolling;
+
+// Approach 3
+
+
+import { useEffect, useRef, useState } from "react";
+import useInfiniteScrolling from "../../hooks/useInfiniteScrolling";
+
+function InfiniteScroll() {
+  const [page, setPage] = useState(0);
+  const { data, loading, error, hasMore } = useInfiniteScrolling(page, 20);
+
+  const lastElementRef = useRef<HTMLParagraphElement | null>(null);
+
+  useEffect(() => {
+    let timeout = null;
+
+    const handleScroll = () => {
+      if (timeout) return; // Prevent spamming
+
+      timeout = setTimeout(() => {
+        const scrollTop = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const fullHeight = document.documentElement.scrollHeight;
+
+        if (
+          !loading &&
+          hasMore &&
+          scrollTop + windowHeight >= fullHeight - 100
+        ) {
+          setPage((prev) => prev + 1);
+        }
+
+        timeout = null;
+      }, 200); // delay between triggers
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, hasMore]);
+
+  return (
+    <div className="container">
+      {data.map((item, index) => {
+        const isLast = index === data.length - 1;
+        return (
+          <p key={item.id} ref={isLast ? lastElementRef : null}>
+            {item.title}
+          </p>
+        );
+      })}
+      {loading && <p>Loading...</p>}
+      {error && <p>Error fetching data.</p>}
+    </div>
+  );
+}
+
+export default InfiniteScroll;
+
